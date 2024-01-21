@@ -2,6 +2,8 @@
 /// hiragana, katakana and kanji.
 library kana_kit;
 
+import 'dart:convert';
+
 import 'package:kana_kit/kana_kit.dart';
 import 'package:kana_kit/src/constants.dart';
 import 'package:kana_kit/src/utils.dart';
@@ -9,6 +11,7 @@ import 'package:kana_kit/src/utils.dart';
 export 'src/models/models.dart';
 
 part 'src/conversions.dart';
+
 part 'src/checks.dart';
 
 const _cannotBeEmptyWarning = 'The input String cannot be empty.';
@@ -193,8 +196,9 @@ class KanaKit {
       toRomaji: toRomaji,
       destinationIsRomaji: true,
     );
-    final romajiTokens =
-        _MappingParser(config.romanization.kanaToRomajiMap).apply(hiragana);
+
+    final mapping = _TransformationCache._transformKanaToRomanjiMap(this);
+    final romajiTokens = _MappingParser(mapping).apply(hiragana);
 
     return romajiTokens.map((romajiToken) {
       final start = romajiToken.start;
@@ -232,8 +236,8 @@ class KanaKit {
       return input;
     }
 
-    final kanaTokens = _MappingParser(config.romanization.romajiToKanaMap)
-        .apply(input.toLowerCase());
+    final mapping = _TransformationCache._transformRomajiToKanaMap(this);
+    final kanaTokens = _MappingParser(mapping).apply(input.toLowerCase());
 
     return kanaTokens.map((kanaToken) {
       final start = kanaToken.start;
@@ -320,13 +324,46 @@ class KanaKit {
     bool? passRomaji,
     bool? passKanji,
     bool? upcaseKatakana,
+    void Function(Map<String, dynamic>) kanaToRomajiMapModifier = _noModifiers,
+    void Function(Map<String, dynamic>) romajiToKanaMapModifier = _noModifiers,
   }) {
     return KanaKit(
       config: KanaKitConfig(
         passRomaji: passRomaji ?? config.passRomaji,
         passKanji: passKanji ?? config.passKanji,
         upcaseKatakana: upcaseKatakana ?? config.upcaseKatakana,
+        kanaToRomajiMapModifier: kanaToRomajiMapModifier,
+        romajiToKanaMapModifier: romajiToKanaMapModifier,
       ),
     );
+  }
+
+  static void _noModifiers(Map<String, dynamic> map) {}
+}
+
+class _TransformationCache {
+  static final Map<KanaKit, Map<String, dynamic>> _transformedKanaToRomanjiMap =
+      {};
+  static final Map<KanaKit, Map<String, dynamic>> _transformedRomajiToKanaMap =
+      {};
+
+  static Map<String, dynamic> _transformKanaToRomanjiMap(KanaKit kanaKit) {
+    if (!_transformedKanaToRomanjiMap.containsKey(kanaKit)) {
+      final mapping = kanaKit.config.romanization.kanaToRomajiMap;
+      final copy = jsonDecode(jsonEncode(mapping)) as Map<String, dynamic>;
+      kanaKit.config.kanaToRomajiMapModifier(copy);
+      _transformedKanaToRomanjiMap[kanaKit] = copy;
+    }
+    return _transformedKanaToRomanjiMap[kanaKit]!;
+  }
+
+  static Map<String, dynamic> _transformRomajiToKanaMap(KanaKit kanaKit) {
+    if (!_transformedRomajiToKanaMap.containsKey(kanaKit)) {
+      final mapping = kanaKit.config.romanization.romajiToKanaMap;
+      final copy = jsonDecode(jsonEncode(mapping)) as Map<String, dynamic>;
+      kanaKit.config.romajiToKanaMapModifier(copy);
+      _transformedRomajiToKanaMap[kanaKit] = copy;
+    }
+    return _transformedRomajiToKanaMap[kanaKit]!;
   }
 }

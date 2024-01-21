@@ -139,6 +139,18 @@ void main() {
           the(input: 'んよ んあ んゆ', shouldBecome: "n'yo n'a n'yu");
           the(input: 'シンヨ', shouldBecome: "SHIN'YO");
         });
+        group('mapping modifier', () {
+          final the = converterTest(
+            kanaKit.copyWithConfig(
+              kanaToRomajiMapModifier: (Map<String, dynamic> map) {
+                (map['し'] as Map<String, dynamic>)[''] = 'she';
+              },
+            ).toRomaji,
+          );
+          the(input: 'し', shouldBecome: 'she');
+          the(input: 'おんよみ', shouldBecome: "on'yomi");
+          the(input: 'シーサー', shouldBecome: 'sheesaa');
+        });
       });
     });
     group('toKana', () {
@@ -206,6 +218,18 @@ void main() {
         the(input: 'KEFUKOETE', shouldBecome: 'KEFUKOETE');
         the(input: 'ASAKIYUMEMISHI', shouldBecome: 'ASAKIYUMEMISHI');
         the(input: 'NLTU', shouldBecome: 'NLTU');
+      });
+      group('mapping modifier', () {
+        final the = converterTest(
+          kanaKit.copyWithConfig(
+            romajiToKanaMapModifier: (Map<String, dynamic> map) {
+              (map['n'] as Map<String, dynamic>).remove('');
+              (map['n'] as Map<String, dynamic>)['n'] = {'': 'ん'};
+            },
+          ).toHiragana,
+        );
+        the(input: 'nn', shouldBecome: 'ん');
+        the(input: 'n', shouldBecome: 'n');
       });
     });
 

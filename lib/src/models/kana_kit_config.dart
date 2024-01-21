@@ -15,6 +15,8 @@ class KanaKitConfig extends Equatable {
     required this.passRomaji,
     required this.passKanji,
     required this.upcaseKatakana,
+    this.kanaToRomajiMapModifier = _noModifiers,
+    this.romajiToKanaMapModifier = _noModifiers,
     this.romanization = Romanization.hepburn,
   });
 
@@ -67,6 +69,14 @@ class KanaKitConfig extends Equatable {
   /// romanization: Romanizaion.hepburn,
   /// ```
   final Romanization romanization;
+
+  /// A function that can be used to modify the [Romanization.kanaToRomajiMap].
+  final void Function(Map<String, dynamic>) kanaToRomajiMapModifier;
+
+  /// A function that can be used to modify the [Romanization.kanaToRomajiMap].
+  final void Function(Map<String, dynamic>) romajiToKanaMapModifier;
+
+  static void _noModifiers(Map<String, dynamic> map) {}
 
   /// Creates a copy of this object that replaces the provided fields.
   KanaKitConfig copyWith({
